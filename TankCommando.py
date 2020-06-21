@@ -3,7 +3,19 @@ from pygame.locals import *
 from pygame.sprite import Group
 
 GRID_UNIT = 30
-GRID_X, GRID_Y = 20, 20 
+
+MAP = []
+with open('map', 'r') as map_file:
+    for line in map_file:
+        temp_line = []
+        for character in line:
+            if character != '\n':
+                temp_line.append(character)
+        MAP.append(temp_line)
+
+GRID_X, GRID_Y = len(MAP[0]), len(MAP)
+
+SURFACE_LIB = pygame.image.load("sprites.gif")
 
 WINDOW_SIZE = WINDOW_WIDTH, WINDOW_HEIGHT = GRID_X * GRID_UNIT, GRID_Y * GRID_UNIT
 BLACK = (0, 0, 0)
@@ -54,7 +66,7 @@ def is_collided(rect_1, rect_2):
 tank_size = GRID_UNIT, GRID_UNIT
 TANK = {}
 pro_tank_surface = pygame.Surface((13, 13))
-pro_tank_surface.blit(pygame.image.load("sprites.gif"), (0, 0), (0, 0, 13, 13))
+pro_tank_surface.blit(SURFACE_LIB, (0, 0), (0, 0, 13, 13))
 TANK[UP] = pygame.transform.scale(pro_tank_surface, tank_size)
 TANK[LEFT] = pygame.transform.rotate(TANK[UP], 90)
 TANK[DOWN] = pygame.transform.rotate(TANK[UP], 180)
@@ -66,6 +78,7 @@ class Tank(pygame.sprite.Sprite):
         pygame.sprite.Sprite.__init__(self)
 
         self.image = TANK[direction]
+        self.image.set_colorkey(BLACK)
         self.direction = direction
         self.rect = self.image.get_rect()
         self.grid_position = grid_position
@@ -103,8 +116,11 @@ class Tank(pygame.sprite.Sprite):
             return
 
         temp_sprite = Tank(self.direction, self.grid_move(self.direction))
-        collide_sprites = pygame.sprite.spritecollide(temp_sprite, OBJECTS, False)
-        if len(collide_sprites):
+        
+        if len(pygame.sprite.spritecollide(temp_sprite, OBJECTS, False)) \
+            or len(pygame.sprite.spritecollide(temp_sprite, STEEL_OBJS, False)) \
+            or len(pygame.sprite.spritecollide(temp_sprite, WATER_OBJS, False)) \
+            or len(pygame.sprite.spritecollide(temp_sprite, BRICK_OBJS, False)):
             self.next_move_command = None
             return
 
@@ -216,6 +232,14 @@ class Bullet(pygame.sprite.Sprite):
             if pygame.sprite.collide_rect(self, tank):
                 tank.terminate()
                 self.kill()
+
+        collision_bricks = pygame.sprite.spritecollide(self, BRICK_OBJS, False)
+        for brick in collision_bricks: 
+            brick.kill()
+            self.kill()
+
+        if len(pygame.sprite.spritecollide(self, STEEL_OBJS, False)):
+            self.kill()
         
         if self.is_out():
             self.kill()
@@ -239,9 +263,82 @@ enemy_tanks.add(enemy_tank)
 OBJECTS.add(enemy_tank)
 
 
+GROUND, BRIDGE, BRICK, STEEL, WATER, GRASS = '-', 'R', 'B', 'S', 'W', 'G'
+
+object_size = (GRID_UNIT, GRID_UNIT)
+
+OBJ_SUR = {}
+
+ground_surface = pygame.Surface((8, 8))
+ground_surface.blit(SURFACE_LIB, (0, 0), (64, 72, 8, 8))
+
+brick_surface = pygame.Surface((8, 8))
+brick_surface.blit(SURFACE_LIB, (0, 0), (56, 64, 8, 8))
+
+steel_surface = pygame.Surface((8, 8))
+steel_surface.blit(SURFACE_LIB, (0, 0), (48, 72, 8, 8))
+
+water_surface = pygame.Surface((8, 8))
+water_surface.blit(SURFACE_LIB, (0, 0), (64, 64, 8, 8))
+
+grass_surface = pygame.Surface((8, 8))
+grass_surface.blit(SURFACE_LIB, (0, 0), (56, 72, 8, 8))
+
+OBJ_SUR = {
+    BRIDGE: pygame.transform.scale(ground_surface, object_size), 
+    BRICK: pygame.transform.scale(brick_surface, object_size), 
+    STEEL: pygame.transform.scale(steel_surface, object_size), 
+    WATER: pygame.transform.scale(water_surface, object_size), 
+    GRASS: pygame.transform.scale(grass_surface, object_size), 
+}
+
+
+
+class Obstacles(pygame.sprite.Sprite):
+    def __init__(self, obs_type, grid_position):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = OBJ_SUR[obs_type]
+        self.image.set_colorkey(BLACK)
+        
+        self.obs_type = obs_type
+
+        self.rect = self.image.get_rect()
+        self.rect.left, self.rect.top = grid_position[0] * GRID_UNIT, grid_position[1] * GRID_UNIT
+
+    def update(self):
+        SCREEN.blit(self.image, self.rect)
+
+BRIDGE_OBJS, BRICK_OBJS, STEEL_OBJS, WATER_OBJS, GRASS_OBJS = Group(), Group(), Group(), Group(), Group()
+
+
+for i in range(0, GRID_X):
+    for j in range(0, GRID_Y):
+        if MAP[j][i] == GROUND:
+            continue
+
+        new_obs = Obstacles( MAP[j][i], (i, j))
+        if MAP[j][i] == BRIDGE:
+            BRIDGE_OBJS.add(new_obs)
+        elif MAP[j][i] == BRICK:
+            BRICK_OBJS.add(new_obs)
+        elif MAP[j][i] == STEEL:
+            STEEL_OBJS.add(new_obs)
+        elif MAP[j][i] == WATER:
+            WATER_OBJS.add(new_obs)
+        elif MAP[j][i] == GRASS:
+            GRASS_OBJS.add(new_obs)
+
+ 
 while 1:
     dt = clock.tick(80)
     SCREEN.fill(BLACK)
+
+    BRIDGE_OBJS.update()
+    BRICK_OBJS.update() 
+    STEEL_OBJS.update() 
+    WATER_OBJS.update()
+
+    # Game play
     for event in pygame.event.get():
         if event.type == pygame.QUIT: sys.exit()
         if event.type == pygame.KEYDOWN:
@@ -264,8 +361,8 @@ while 1:
         tank.update(enemy_tanks)
 
     enemy_tanks.update([tank])
+
+    GRASS_OBJS.update()
     
     
     pygame.display.flip()
-
-
