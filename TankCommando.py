@@ -53,7 +53,9 @@ def is_collided(rect_1, rect_2):
 
 tank_size = GRID_UNIT, GRID_UNIT
 TANK = {}
-TANK[UP] = pygame.transform.scale(pygame.image.load("tank.png"), tank_size)
+pro_tank_surface = pygame.Surface((13, 13))
+pro_tank_surface.blit(pygame.image.load("sprites.gif"), (0, 0), (0, 0, 13, 13))
+TANK[UP] = pygame.transform.scale(pro_tank_surface, tank_size)
 TANK[LEFT] = pygame.transform.rotate(TANK[UP], 90)
 TANK[DOWN] = pygame.transform.rotate(TANK[UP], 180)
 TANK[RIGHT] = pygame.transform.rotate(TANK[UP], -90)
@@ -172,7 +174,6 @@ class EnemyTank(Tank):
 
             if action == SHOOT:
                 self.fire(enemy_bullets)
-                print("shoooot")
             else:
                 self.command_move(action)
 
