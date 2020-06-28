@@ -57,6 +57,7 @@ BULLET_MOVE = {
 }
 
 pygame.init()
+pygame.display.set_caption('Battle Field')
 
 speed = [1, 1]
 

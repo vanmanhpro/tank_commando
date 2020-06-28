@@ -10,11 +10,11 @@ from models.asg2 import get_mfcc
 COMMAND_PATH = '/home/vanmanh/XuLyTiengNoi/TankCommando/commands'
 
 MAP_COMMAND = {
-    'Hoc': 'shoot',
-    'YTe': 'up',
-    'ThanhPho': 'down',
-    'Me': 'left',
-    'Nha': 'right'
+    'ban': 'shoot',
+    'len': 'up',
+    'xuong': 'down',
+    'trai': 'left',
+    'phai': 'right'
 }
 
 def find_result(lsres):
@@ -44,8 +44,9 @@ class App:
 
         # For model
         self.models_v = []
-        for i in range(1, 12):
-            file = open(f"models/models_v{i}.pkl", "rb")
+        for i in range(2, 3):
+            print(i)
+            file = open(f"models/model_v{i}.pkl", "rb")
             self.models_v.append(pickle.load(file))
             file.close()
         # self.models_v = [pickle.load(open(f"models_v{i}.pkl", "rb")) for i in range(1,12)]
@@ -55,7 +56,7 @@ class App:
         # For App
         self.main = tk.Tk()
         self.main.geometry('400x200')
-        self.main.title('Speech Recognition')
+        self.main.title('Commando')
 
         self.record_state = tk.Label(text="")
         self.result_text = tk.Label(text="Command: ")
@@ -85,11 +86,11 @@ class App:
         wf.setframerate(self.RATE)
         wf.writeframes(b''.join(self.frames))
         wf.close()
+        self.predict()
 
     def stop_record(self):
         self.st = 0
         print("recording completed")
-        self.predict()
 
     def record(self):
         if self.recording == True:
