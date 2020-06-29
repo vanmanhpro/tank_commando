@@ -2,6 +2,10 @@ import sys, random, pygame
 from pygame.locals import *
 from pygame.sprite import Group
 import pickle
+from App_v4 import App
+import pyaudio, wave
+from threading import Thread
+import os
 
 GRID_UNIT = 30
 
@@ -322,6 +326,8 @@ class Game():
 
         self.game_stage = self.MENU
 
+        self.app = App()
+
     def gameCycle(self):
         game_loop = True
         while game_loop:
@@ -433,9 +439,22 @@ class Game():
         with open("commands", "wb") as file:
             pickle.dump(commands, file)
 
-        while self.game_stage == self.PLAY:
 
+        while self.game_stage == self.PLAY:
             dt = clock.tick(60)
+            # Game play
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT: sys.exit()
+                if event.type == pygame.KEYDOWN:
+                    pressing = pygame.key.get_pressed()
+                    if pressing[pygame.K_s]:
+                        start_record_thread = Thread(target=self.app.start_recording)        
+                        start_record_thread.start()
+                        print("start recording")
+                    elif pressing[pygame.K_f]:
+                        stop_record_thread = Thread(target=self.app.stop_recording)
+                        stop_record_thread.start()
+                        print("stop recording")
 
             period_sum += dt
             if period_sum > 250:
@@ -466,9 +485,6 @@ class Game():
             STEEL_OBJS.update()
             WATER_OBJS.update()
 
-            # Game play
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT: sys.exit()
                     
 
             BULLETS.update(ENEMY_TANKS)

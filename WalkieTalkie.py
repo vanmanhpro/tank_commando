@@ -5,7 +5,9 @@ import pyaudio
 import wave
 import os
 import pickle
+import time
 from models.asg2 import get_mfcc
+
 
 COMMAND_PATH = '/home/vanmanh/XuLyTiengNoi/TankCommando/commands'
 
@@ -50,7 +52,7 @@ class App:
             self.models_v.append(pickle.load(file))
             file.close()
         # self.models_v = [pickle.load(open(f"models_v{i}.pkl", "rb")) for i in range(1,12)]
-        self.file_path = ""
+        self.file_path = "record.wav"
         # self.predict = ""
 
         # For App
@@ -67,7 +69,7 @@ class App:
         self.btn_record.place(relx=0.5, rely=0.2, anchor=CENTER)
         self.record_state.grid(row=0, column=1, sticky=W, padx = 20)
         self.result_text.grid(row=2, column=1, sticky=W, padx = 20, pady=50)
-        self.main.mainloop()
+        # self.main.mainloop()
 
     def start_record(self):
         self.result_text.config(text="Command: ")
@@ -87,7 +89,6 @@ class App:
         wf.writeframes(b''.join(self.frames))
         wf.close()
         self.predict()
-
     def stop_record(self):
         self.st = 0
         print("recording completed")
@@ -133,3 +134,6 @@ class App:
             pickle.dump(commands, file)
 
 app = App()
+start = time.process_time()
+app.predict()
+print(time.process_time() - start)
