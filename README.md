@@ -30,4 +30,4 @@ This section should list any major frameworks that you built your project using.
 * Pham Khanh Ly: [@lymin18](https://github.com/lymin18)
 * Do Tuan Anh: [@tuananh2998](https://github.com/tuananh2998)
 * Pham Ngoc Anh Trang: [@anhtrangchip](https://github.com/anhtrangchip)
-* Do Thanh Dat: [@username31299]https://github.com/username31299
+* Do Thanh Dat: [@username31299](https://github.com/username31299)
