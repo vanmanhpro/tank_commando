@@ -53,7 +53,7 @@ class App:
         self.recording_lock = 0
 
         self.current_recording = None
-        # self.exported_commands = []
+        self.exported_commands = []
     
     def start_recording(self):
 
@@ -112,17 +112,14 @@ class App:
         print(lsres)
         print("predicted: " + result_predict)
 
-        # self.exported_commands.append(result_predict)
-
-        with open(COMMAND_PATH, "rb") as file:
-            commands = pickle.load(file)
-
-        commands.append(result_predict)
-
-        with open(COMMAND_PATH, "wb") as file:
-            pickle.dump(commands, file)
+        self.exported_commands.append(result_predict)
 
         os.remove(file_path)
+
+    def export_commands(self):
+        commands = self.exported_commands
+        self.exported_commands = []
+        return commands
 
 # app = App()
 

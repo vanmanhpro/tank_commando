@@ -210,11 +210,12 @@ class EnemyTank(Tank):
 
     def set_action(self):
         if self.moving is None and random.randint(1, 100000000) % 30 == 0:
-            possible_action = [UP, DOWN, LEFT, RIGHT]
-            action = possible_action[random.randint(0, 3)]
+            possible_action = [UP, DOWN, LEFT, RIGHT, SHOOT, SHOOT, SHOOT, SHOOT]
+            random_action = random.randint(0, 7)
+            action = possible_action[random_action]
 
-            self.fire(ENEMY_BULLETS)
-            self.command_move(action)
+            if (random_action >3 ): self.fire(ENEMY_BULLETS)
+            if (random_action < 4): self.command_move(action)
 
     def update(self, anti_tanks=[]):
         self.set_action()
@@ -314,7 +315,7 @@ class Obstacles(pygame.sprite.Sprite):
         SCREEN.blit(self.image, self.rect)
 
 class Game():
-    MENU, PLAY, GAMEOVER = 0, 1, 2
+    MENU, PLAY, WINGAME, GAMEOVER = 0, 1, 2, 3
     def __init__(self):
         self.font = pygame.font.SysFont(None, 24)
         self.im_game_over = pygame.Surface((64, 40))
@@ -335,8 +336,37 @@ class Game():
                 self.showMenu()
             elif self.game_stage == self.PLAY:
                 self.play()
+            elif self.game_stage == self.WINGAME:
+                self.winGame()
             elif self.game_stage == self.GAMEOVER:
                 self.gameOver()
+
+    def winGame(self):
+        """ End game and return to menu """
+
+        print("Game Over")
+
+        self.game_over_y = 416 + 40
+
+        self.winGameScreen()
+
+
+    def winGameScreen(self):
+        """ Show game over screen """
+
+        SCREEN.fill([0, 0, 0])
+
+        self.writeInBricks("you", [185, 150])
+        self.writeInBricks("win", [185, 230])
+        pygame.display.flip()
+
+        while self.game_stage == self.WINGAME:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    quit()
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_RETURN:
+                        self.game_stage = self.MENU
 
     def gameOver(self):
         """ End game and return to menu """
@@ -353,8 +383,8 @@ class Game():
 
         SCREEN.fill([0, 0, 0])
 
-        self.writeInBricks("game", [125, 140])
-        self.writeInBricks("over", [125, 220])
+        self.writeInBricks("game", [185, 150])
+        self.writeInBricks("over", [185, 230])
         pygame.display.flip()
 
         while self.game_stage == self.GAMEOVER:
@@ -455,28 +485,31 @@ class Game():
                         stop_record_thread = Thread(target=self.app.stop_recording)
                         stop_record_thread.start()
                         print("stop recording")
-
-            period_sum += dt
-            if period_sum > 250:
-                period_sum = 0
-                with open("commands", "rb") as file:
-                    commands = pickle.load(file)
-
-                for command in commands:
-                    if command == DOWN:
+                    if pressing[pygame.K_DOWN]:
                         TANK.command_move(DOWN)
-                    elif command == UP:
+                    elif pressing[pygame.K_UP]:
                         TANK.command_move(UP)
-                    elif command == LEFT:
+                    elif pressing[pygame.K_LEFT]:
                         TANK.command_move(LEFT)
-                    elif command == RIGHT:
+                    elif pressing[pygame.K_RIGHT]:
                         TANK.command_move(RIGHT)
-                    elif command == SHOOT:
+                    if pressing[pygame.K_SPACE]:
                         TANK.fire(BULLETS)
 
-                commands = []
-                with open("commands", "wb") as file:
-                    pickle.dump(commands, file)
+            commands = self.app.export_commands()
+            for command in commands:
+                if command == DOWN:
+                    TANK.command_move(DOWN)
+                elif command == UP:
+                    TANK.command_move(UP)
+                elif command == LEFT:
+                    TANK.command_move(LEFT)
+                elif command == RIGHT:
+                    TANK.command_move(RIGHT)
+                elif command == SHOOT:
+                    TANK.fire(BULLETS)
+
+                
 
             SCREEN.fill(BLACK)
 
@@ -502,7 +535,7 @@ class Game():
                 if enemy_tank.is_dead():
                     enemy_tank_dead += 1;
             if enemy_tank_dead == len(ENEMY_TANKS):
-                self.game_stage = self.GAMEOVER
+                self.game_stage = self.WINGAME
 
             GRASS_OBJS.update()
 
@@ -518,12 +551,12 @@ class Game():
 
         if pygame.font.get_init():
 
-            SCREEN.blit(self.font.render("1 PLAYER", True, pygame.Color('white')), [165, 250])
+            SCREEN.blit(self.font.render("PLAY", True, pygame.Color('white')), [285, 300])
 
-        SCREEN.blit(self.player_image, [125, 245])
+        SCREEN.blit(self.player_image, [260, 300])
 
-        self.writeInBricks("battle", [70, 80])
-        self.writeInBricks("city", [135, 160])
+        self.writeInBricks("battle", [120,130])
+        self.writeInBricks("city", [185, 210])
 
         if put_on_surface:
             pygame.display.flip()
@@ -572,9 +605,10 @@ class Game():
         @return None
         """
 
-
+        # bricks = pygame.Surface((8, 8))
+        # bricks.blit(SURFACE_LIB, (0, 0), (56*2, 64*2, 8*2, 8*2))
         bricks = sprites.subsurface(56, 64, 8, 8)
-        brick1 = bricks.subsurface((0, 0, 4, 4))
+        brick1 = bricks.subsurface((0, 0, 4*2, 4*2))
         brick2 = bricks.subsurface((4, 0, 4, 4))
         brick3 = bricks.subsurface((4, 4, 4, 4))
         brick4 = bricks.subsurface((0, 4, 4, 4))
@@ -588,10 +622,13 @@ class Game():
             "i": "01f8c183060c7e",
             "l": "0183060c18307e",
             "m": "018fbffffaf1e3",
+            "n": "018F9FBDF9F1E3",
             "o": "00fb1e3c78f1be",
             "r": "01fb1e3cff3767",
             "t": "01f8c183060c18",
+            "u": "018F1E3C78FFBE",
             "v": "018f1e3eef8e08",
+            "w": "018F1E3D7AFFB6",
             "y": "019b3667860c18"
         }
 
